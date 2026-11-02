@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Robot Humanoid - Suara Manusia (Google TTS)</title>
+  <title>Robot Humanoid - Suara AI Asli</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -18,7 +18,6 @@
       overflow: hidden;
     }
 
-    /* Wadah Robot */
     .robot-wrapper {
       position: relative;
       width: 320px;
@@ -114,7 +113,6 @@
       margin-top: -8px; z-index: 5;
     }
 
-    /* --- BADAN --- */
     .torso {
       position: relative;
       width: 140px; height: 170px;
@@ -141,7 +139,6 @@
       width: 50px; height: 6px; background: #222; border-radius: 50%; border-top: 2px solid #555;
     }
 
-    /* --- LENGAN --- */
     .arm {
       position: absolute; top: 5px; width: 35px; height: 200px;
       display: flex; flex-direction: column; align-items: center; z-index: 4;
@@ -174,7 +171,6 @@
       border-radius: 8px; margin-top: -5px;
     }
 
-    /* --- PINGGUL --- */
     .pelvis {
       position: relative; width: 130px; height: 55px;
       background: linear-gradient(135deg, #fff, #a0b4d0);
@@ -182,7 +178,6 @@
       margin-top: -10px; z-index: 7;
     }
 
-    /* --- TOMBOL --- */
     .start-btn {
       position: absolute; bottom: 30px; padding: 15px 40px;
       font-size: 16px; font-weight: bold; color: #00ffff;
@@ -221,49 +216,97 @@
     <div class="pelvis"></div>
   </div>
 
-  <button class="start-btn" id="startBtn">Aktifkan Suara AI</button>
-
-  <!-- AUDIO MANUSIA MENGGUNAKAN GOOGLE TRANSLATE TTS -->
-  <audio id="suaraRobot" crossorigin="anonymous"></audio>
+  <button class="start-btn" id="startBtn">Aktifkan Robot AI</button>
 
   <script>
     const startBtn = document.getElementById('startBtn');
     const robotWrapper = document.getElementById('robotWrapper');
-    const audioRobot = document.getElementById('suaraRobot');
 
-    // Teks yang akan diucapkan oleh suara manusia (Bahasa Indonesia)
-    const teksUcapan = "Halo manusia. Saya adalah unit robot humanoid yang telah aktif. Sistem saya berjalan dengan normal. Apakah ada yang bisa saya bantu?";
-    
-    // Menggunakan API Google Translate untuk menghasilkan suara manusia asli (TTS)
-    // API ini sangat stabil dan berjalan di HTTPS
-    const urlSuara = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(teksUcapan)}&tl=id&client=tw-ob`;
+    // Teks yang akan diucapkan (Durasi ±10 detik)
+    const teksRobot = "Halo manusia. Saya adalah unit intelijen buatan humanoid. Sistem sensor dan saraf mekanik saya telah aktif sepenuhnya. Silakan berikan saya instruksi.";
+
+    // --- FUNGSI MEMBANGUNKAN SUARA AI DI HP ---
+    function pancingSuaraAI() {
+      if ('speechSynthesis' in window) {
+        // Trik: Ucapkan teks kosong dengan volume 0 untuk membangunkan mesin TTS HP
+        const wakeUp = new SpeechSynthesisUtterance('');
+        wakeUp.volume = 0;
+        window.speechSynthesis.speak(wakeUp);
+      }
+    }
+
+    // Pancing suara segera setelah halaman dimuat
+    window.addEventListener('load', pancingSuaraAI);
 
     startBtn.addEventListener('click', () => {
       startBtn.classList.add('hidden');
-      
-      // Set sumber audio
-      audioRobot.src = urlSuara;
-      
-      // Putar suara
-      audioRobot.play().then(() => {
-        robotWrapper.classList.add('talking');
-      }).catch(error => {
-        console.error("Gagal memutar audio:", error);
-        alert("Gagal memuat suara. Pastikan HP Anda terhubung ke internet dan coba lagi.");
+      pancingSuaraAI(); // Pancing sekali lagi saat tombol diklik
+
+      if ('speechSynthesis' in window) {
+        // Bersihkan antrean suara sebelumnya
+        window.speechSynthesis.cancel();
+
+        setTimeout(() => {
+          const ucapan = new SpeechSynthesisUtterance(teksRobot);
+
+          // --- PENGATURAN SUARA AI MANUSIA ROBOTIK ---
+          ucapan.pitch = 0.1; // Sangat rendah (Berat/Seperti mesin)
+          ucapan.rate = 0.9;  // Sedikit lebih lambat
+          ucapan.volume = 1;
+
+          // Cari suara yang tersedia
+          const daftarSuara = window.speechSynthesis.getVoices();
+          let suaraPilihan = null;
+
+          // 1. Coba cari suara Bahasa Indonesia
+          suaraPilihan = daftarSuara.find(v => v.lang.includes('id') || v.lang.includes('ID'));
+
+          // 2. Jika tidak ada, cari suara Bahasa Inggris (Paling umum di HP)
+          if (!suaraPilihan) {
+            ucapan.lang = 'en-US';
+            suaraPilihan = daftarSuara.find(v => v.lang.includes('en')) || daftarSuara[0];
+          } else {
+            ucapan.lang = 'id-ID';
+          }
+
+          if (suaraPilihan) {
+            ucapan.voice = suaraPilihan;
+          }
+
+          // --- ANIMASI ---
+          ucapan.onstart = () => {
+            robotWrapper.classList.add('talking');
+          };
+
+          ucapan.onend = () => {
+            robotWrapper.classList.remove('talking');
+            startBtn.classList.remove('hidden'); // Munculkan tombol lagi
+          };
+          
+          ucapan.onerror = (e) => {
+            console.error("Error TTS:", e);
+            robotWrapper.classList.remove('talking');
+            alert("HP Anda menolak fitur suara AI. Pastikan Anda menggunakan Google Chrome dan volume media menyala.");
+            startBtn.classList.remove('hidden');
+          };
+
+          // Mulai bicara
+          window.speechSynthesis.speak(ucapan);
+          
+        }, 100); // Jeda sedikit agar HP siap
+
+      } else {
+        alert("Browser Anda tidak mendukung suara AI. Gunakan Google Chrome.");
         startBtn.classList.remove('hidden');
-      });
-
-      // Animasi saat berbicara
-      audioRobot.onplay = () => {
-        robotWrapper.classList.add('talking');
-      };
-
-      // Hentikan animasi saat selesai
-      audioRobot.onended = () => {
-        robotWrapper.classList.remove('talking');
-        startBtn.classList.remove('hidden'); // Munculkan tombol lagi
-      };
+      }
     });
+
+    // Memuat daftar suara secara asinkron (kadang browser butuh waktu)
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
   </script>
 </body>
 </html>
